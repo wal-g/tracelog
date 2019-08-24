@@ -48,3 +48,9 @@ func (logger *errorLogger) FatalOnError(err error) {
 func (logger *errorLogger) PrintError(err error) {
 	logger.Printf(GetErrorFormatter()+"\n", err)
 }
+
+func (logger *errorLogger) PrintOnError(err error) {
+	if err != nil {
+		logger.PrintError(err)
+	}
+}
