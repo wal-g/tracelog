@@ -13,6 +13,22 @@ func NewErrorLogger(out io.Writer, prefix string) *errorLogger {
 	return &errorLogger{log.New(out, prefix, timeFlags)}
 }
 
+func (logger *errorLogger) PanicError(err error) {
+	logger.Panicf(GetErrorFormatter(), err)
+}
+
+func (logger *errorLogger) PanicfOnError(format string, err error) {
+	if err != nil {
+		logger.Panicf(format, err)
+	}
+}
+
+func (logger *errorLogger) PanicOnError(err error) {
+	if err != nil {
+		logger.PanicError(err)
+	}
+}
+
 func (logger *errorLogger) FatalError(err error) {
 	logger.Fatalf(GetErrorFormatter(), err)
 }
