@@ -14,8 +14,8 @@ const (
 	timeFlags      = log.LstdFlags | log.Lmicroseconds
 )
 
-var InfoLogger = NewErrorLogger(os.Stderr, "INFO: ")
-var WarningLogger = NewErrorLogger(os.Stderr, "WARNING: ")
+var InfoLogger = NewErrorLogger(os.Stdout, "INFO: ")
+var WarningLogger = NewErrorLogger(os.Stdout, "WARNING: ")
 var ErrorLogger = NewErrorLogger(os.Stderr, "ERROR: ")
 var DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
 
@@ -30,7 +30,7 @@ func setupLoggers() {
 	if logLevel == NormalLogLevel {
 		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
 	} else {
-		DebugLogger = NewErrorLogger(os.Stderr, "DEBUG: ")
+		DebugLogger = NewErrorLogger(os.Stdout, "DEBUG: ")
 	}
 }
 
