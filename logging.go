@@ -2,15 +2,17 @@ package tracelog
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 const (
 	NormalLogLevel = "NORMAL"
 	DevelLogLevel  = "DEVEL"
+	ErrorLogLevel  = "ERROR"
 	timeFlags      = log.LstdFlags | log.Lmicroseconds
 )
 
@@ -19,16 +21,21 @@ var WarningLogger = NewErrorLogger(os.Stdout, "WARNING: ")
 var ErrorLogger = NewErrorLogger(os.Stderr, "ERROR: ")
 var DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
 
-var LogLevels = []string{NormalLogLevel, DevelLogLevel}
+var LogLevels = []string{NormalLogLevel, DevelLogLevel, ErrorLogLevel}
 var logLevel = NormalLogLevel
 var logLevelFormatters = map[string]string{
 	NormalLogLevel: "%v",
+	ErrorLogLevel:  "%v",
 	DevelLogLevel:  "%+v",
 }
 
 func setupLoggers() {
 	if logLevel == NormalLogLevel {
 		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
+	} else if logLevel == ErrorLogLevel {
+		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
+		InfoLogger = NewErrorLogger(ioutil.Discard, "INFO: ")
+		WarningLogger = NewErrorLogger(ioutil.Discard, "WARNING: ")
 	} else {
 		DebugLogger = NewErrorLogger(os.Stdout, "DEBUG: ")
 	}
