@@ -84,6 +84,10 @@ func (logger *errorLogger) PrintOnError(err error) {
 	}
 }
 
+func (logger *errorLogger) Print(v ...interface{}) {
+	logger.internalLogger.Print(v)
+}
+
 func (logger *errorLogger) Printf(format string, v ...interface{}) {
 	logger.internalLogger.Printf(format, v)
 }
