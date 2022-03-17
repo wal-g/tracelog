@@ -83,3 +83,11 @@ func (logger *errorLogger) PrintOnError(err error) {
 		logger.PrintError(err)
 	}
 }
+
+func (logger *errorLogger) Printf(format string, v ...interface{}) {
+	logger.internalLogger.Printf(format, v)
+}
+
+func (logger *errorLogger) Println(v ...interface{}) {
+	logger.internalLogger.Println(v)
+}
