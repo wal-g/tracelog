@@ -9,35 +9,38 @@ import (
 	"github.com/pkg/errors"
 )
 
+type LogLevel string
+
 const (
-	NormalLogLevel = "NORMAL"
-	DevelLogLevel  = "DEVEL"
-	ErrorLogLevel  = "ERROR"
-	timeFlags      = log.LstdFlags | log.Lmicroseconds
+	NormalLogLevel LogLevel = "NORMAL"
+	DevelLogLevel  LogLevel = "DEVEL"
+	ErrorLogLevel  LogLevel = "ERROR"
+	timeFlags               = log.LstdFlags | log.Lmicroseconds
 )
 
-var InfoLogger = NewErrorLogger(os.Stdout, "INFO: ")
-var WarningLogger = NewErrorLogger(os.Stdout, "WARNING: ")
-var ErrorLogger = NewErrorLogger(os.Stderr, "ERROR: ")
-var DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
+var InfoLogger = NewErrorLogger(os.Stdout, InfoLoggerType)
+var WarningLogger = NewErrorLogger(os.Stdout, WarningLoggerType)
+var ErrorLogger = NewErrorLogger(os.Stderr, ErrorLoggerType)
+var DebugLogger = NewErrorLogger(ioutil.Discard, DebugLoggerType)
 
-var LogLevels = []string{NormalLogLevel, DevelLogLevel, ErrorLogLevel}
+var LogLevels = []LogLevel{NormalLogLevel, DevelLogLevel, ErrorLogLevel}
 var logLevel = NormalLogLevel
-var logLevelFormatters = map[string]string{
+var logLevelFormatters = map[LogLevel]string{
 	NormalLogLevel: "%v",
 	ErrorLogLevel:  "%v",
 	DevelLogLevel:  "%+v",
 }
 
-func setupLoggers() {
-	if logLevel == NormalLogLevel {
-		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
-	} else if logLevel == ErrorLogLevel {
-		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
-		InfoLogger = NewErrorLogger(ioutil.Discard, "INFO: ")
-		WarningLogger = NewErrorLogger(ioutil.Discard, "WARNING: ")
-	} else {
-		DebugLogger = NewErrorLogger(os.Stdout, "DEBUG: ")
+func syncLogLevel() {
+	switch logLevel {
+	case NormalLogLevel:
+		DebugLogger.SetOutput(ioutil.Discard)
+	case ErrorLogLevel:
+		DebugLogger.SetOutput(ioutil.Discard)
+		InfoLogger.SetOutput(ioutil.Discard)
+		WarningLogger.SetOutput(ioutil.Discard)
+	default: // assume DevelLogLevel
+		DebugLogger.SetOutput(os.Stdout)
 	}
 }
 
@@ -57,7 +60,7 @@ func GetErrorFormatter() string {
 	return logLevelFormatters[logLevel]
 }
 
-func UpdateLogLevel(newLevel string) error {
+func UpdateLogLevel(newLevel LogLevel) error {
 	isCorrect := false
 	for _, level := range LogLevels {
 		if newLevel == level {
@@ -69,6 +72,24 @@ func UpdateLogLevel(newLevel string) error {
 	}
 
 	logLevel = newLevel
-	setupLoggers()
+	syncLogLevel()
 	return nil
+}
+
+func SetOnPanicFunc(onPanic func(format string, err error)) {
+	updateLoggers(func(logger *errorLogger) {
+		logger.onPanic = onPanic
+	})
+}
+
+func SetOnFatalFunc(onFatal func(format string, err error)) {
+	updateLoggers(func(logger *errorLogger) {
+		logger.onFatal = onFatal
+	})
+}
+
+func updateLoggers(updateFunc func(*errorLogger)) {
+	for _, logger := range []*errorLogger{InfoLogger, WarningLogger, DebugLogger, ErrorLogger} {
+		updateFunc(logger)
+	}
 }
