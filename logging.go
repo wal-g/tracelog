@@ -18,10 +18,10 @@ const (
 	timeFlags               = log.LstdFlags | log.Lmicroseconds
 )
 
-var InfoLogger = NewErrorLogger(os.Stdout, InfoLoggerType)
-var WarningLogger = NewErrorLogger(os.Stdout, WarningLoggerType)
-var ErrorLogger = NewErrorLogger(os.Stderr, ErrorLoggerType)
-var DebugLogger = NewErrorLogger(ioutil.Discard, DebugLoggerType)
+var InfoLogger = NewLogger(os.Stdout, InfoLoggerType)
+var WarningLogger = NewLogger(os.Stdout, WarningLoggerType)
+var ErrorLogger = NewLogger(os.Stderr, ErrorLoggerType)
+var DebugLogger = NewLogger(ioutil.Discard, DebugLoggerType)
 
 var LogLevels = []LogLevel{NormalLogLevel, DevelLogLevel, ErrorLogLevel}
 var logLevel = NormalLogLevel
@@ -77,19 +77,19 @@ func UpdateLogLevel(newLevel LogLevel) error {
 }
 
 func SetOnPanicFunc(onPanic func(format string, err error)) {
-	updateLoggers(func(logger *errorLogger) {
-		logger.onPanic = onPanic
+	updateLoggers(func(l *logger) {
+		l.onPanic = onPanic
 	})
 }
 
 func SetOnFatalFunc(onFatal func(format string, err error)) {
-	updateLoggers(func(logger *errorLogger) {
-		logger.onFatal = onFatal
+	updateLoggers(func(l *logger) {
+		l.onFatal = onFatal
 	})
 }
 
-func updateLoggers(updateFunc func(*errorLogger)) {
-	for _, logger := range []*errorLogger{InfoLogger, WarningLogger, DebugLogger, ErrorLogger} {
-		updateFunc(logger)
+func updateLoggers(updateFunc func(*logger)) {
+	for _, l := range []*logger{InfoLogger, WarningLogger, DebugLogger, ErrorLogger} {
+		updateFunc(l)
 	}
 }
