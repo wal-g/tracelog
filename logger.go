@@ -18,18 +18,18 @@ const (
 
 type logger struct {
 	internalLogger *log.Logger
-	onFatal        func(format string, err error)
-	onPanic        func(format string, err error)
+	onFatal        func(format string, v ...interface{})
+	onPanic        func(format string, v ...interface{})
 }
 
 func NewLogger(out io.Writer, loggerType LoggerType) *logger {
 	logPrefix := fmt.Sprintf("%s: ", loggerType)
 	internalLogger := log.New(out, logPrefix, timeFlags)
-	onFatal := func(format string, err error) {
+	onFatal := func(format string, v ...interface{}) {
 		os.Exit(1)
 	}
-	onPanic := func(format string, err error) {
-		panic(fmt.Sprintf(format, err))
+	onPanic := func(format string, v ...interface{}) {
+		panic(fmt.Sprintf(format, v...))
 	}
 	return &logger{internalLogger: internalLogger, onFatal: onFatal, onPanic: onPanic}
 }
@@ -85,13 +85,43 @@ func (logger *logger) PrintOnError(err error) {
 }
 
 func (logger *logger) Print(v ...interface{}) {
-	logger.internalLogger.Print(v)
+	logger.internalLogger.Print(v...)
 }
 
 func (logger *logger) Printf(format string, v ...interface{}) {
-	logger.internalLogger.Printf(format, v)
+	logger.internalLogger.Printf(format, v...)
 }
 
 func (logger *logger) Println(v ...interface{}) {
-	logger.internalLogger.Println(v)
+	logger.internalLogger.Println(v...)
+}
+
+func (logger *logger) Fatal(v ...interface{}) {
+	logger.internalLogger.Print(v...)
+	logger.onFatal(GetErrorFormatter(), v)
+}
+
+func (logger *logger) Fatalf(format string, v ...interface{}) {
+	logger.internalLogger.Printf(format, v...)
+	logger.onFatal(format, v)
+}
+
+func (logger *logger) Fatalln(v ...interface{}) {
+	logger.internalLogger.Println(v...)
+	logger.onFatal(GetErrorFormatter(), v)
+}
+
+func (logger *logger) Panic(v ...interface{}) {
+	logger.internalLogger.Print(v...)
+	logger.onPanic(GetErrorFormatter(), v)
+}
+
+func (logger *logger) Panicf(format string, v ...interface{}) {
+	logger.internalLogger.Printf(format, v...)
+	logger.onPanic(format, v)
+}
+
+func (logger *logger) Panicln(v ...interface{}) {
+	logger.internalLogger.Println(v...)
+	logger.onPanic(GetErrorFormatter(), v)
 }
