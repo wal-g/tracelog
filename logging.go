@@ -76,13 +76,13 @@ func UpdateLogLevel(newLevel LogLevel) error {
 	return nil
 }
 
-func SetOnPanicFunc(onPanic func(format string, err error)) {
+func SetOnPanicFunc(onPanic func(format string, v ...interface{})) {
 	updateLoggers(func(l *logger) {
 		l.onPanic = onPanic
 	})
 }
 
-func SetOnFatalFunc(onFatal func(format string, err error)) {
+func SetOnFatalFunc(onFatal func(format string, v ...interface{})) {
 	updateLoggers(func(l *logger) {
 		l.onFatal = onFatal
 	})
