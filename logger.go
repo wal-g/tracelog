@@ -19,6 +19,8 @@ const (
 // BasicLogger represents the logger
 // without the panic and fatal methods
 type BasicLogger interface {
+	Output(calldepth int, s string) error
+	Writer() io.Writer
 	SetOutput(w io.Writer)
 	Flags() int
 	SetFlags(flag int)
