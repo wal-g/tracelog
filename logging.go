@@ -18,8 +18,8 @@ const (
 	timeFlags               = log.LstdFlags | log.Lmicroseconds
 )
 
-var InfoLogger = NewLogger(os.Stdout, InfoLoggerType)
-var WarningLogger = NewLogger(os.Stdout, WarningLoggerType)
+var InfoLogger = NewLogger(os.Stderr, InfoLoggerType)
+var WarningLogger = NewLogger(os.Stderr, WarningLoggerType)
 var ErrorLogger = NewLogger(os.Stderr, ErrorLoggerType)
 var DebugLogger = NewLogger(ioutil.Discard, DebugLoggerType)
 
@@ -40,7 +40,7 @@ func syncLogLevel() {
 		InfoLogger.SetOutput(ioutil.Discard)
 		WarningLogger.SetOutput(ioutil.Discard)
 	default: // assume DevelLogLevel
-		DebugLogger.SetOutput(os.Stdout)
+		DebugLogger.SetOutput(os.Stderr)
 	}
 }
 
