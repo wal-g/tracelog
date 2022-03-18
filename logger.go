@@ -38,6 +38,14 @@ func (logger *logger) SetOutput(w io.Writer) {
 	logger.internalLogger.SetOutput(w)
 }
 
+func (logger *logger) SetFlags(flag int) {
+	logger.internalLogger.SetFlags(flag)
+}
+
+func (logger *logger) SetPrefix(prefix string) {
+	logger.internalLogger.SetPrefix(prefix)
+}
+
 func (logger *logger) PanicError(err error) {
 	logger.internalLogger.Printf(GetErrorFormatter(), err)
 	logger.onPanic(GetErrorFormatter(), err)
