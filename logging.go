@@ -25,8 +25,8 @@ var LogLevels = []string{NormalLogLevel, DevelLogLevel, ErrorLogLevel}
 var logLevel = NormalLogLevel
 var logLevelFormatters = map[string]string{
 	NormalLogLevel: "%v",
-	ErrorLogLevel:  "%v",
 	DevelLogLevel:  "%+v",
+	ErrorLogLevel:  "%v",
 }
 
 func setupLoggers() {
