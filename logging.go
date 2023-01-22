@@ -45,8 +45,8 @@ type LogLevelError struct {
 	error
 }
 
-func NewLogLevelError() LogLevelError {
-	return LogLevelError{errors.Errorf("got incorrect log level: '%s', expected one of: '%v'", logLevel, LogLevels)}
+func NewLogLevelError(incorrectLogLevel string) LogLevelError {
+	return LogLevelError{errors.Errorf("got incorrect log level: '%s', expected one of: '%v'", incorrectLogLevel, LogLevels)}
 }
 
 func (err LogLevelError) Error() string {
@@ -65,7 +65,7 @@ func UpdateLogLevel(newLevel string) error {
 		}
 	}
 	if !isCorrect {
-		return NewLogLevelError()
+		return NewLogLevelError(newLevel)
 	}
 
 	logLevel = newLevel
