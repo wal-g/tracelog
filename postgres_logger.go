@@ -26,55 +26,7 @@ func GetFieldValues(loggerType LoggerType) func() Fields {
 	}
 }
 
-var InfoPostgresLogger = NewPostgresLogger(GetFieldValues(InfoLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
-var WarningPostgresLogger = NewPostgresLogger(GetFieldValues(WarningLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
-var ErrorPostgresLogger = NewPostgresLogger(GetFieldValues(ErrorLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
-var DebugPostgresLogger = NewPostgresLogger(GetFieldValues(DebugLoggerType), NewTextWriter(ioutil.Discard, BasicFormat, BasicFields))
-
-func NewPostgresLogger(fieldValues FieldValues, loggerWriters ...LoggerWriter) *PostgresLogger {
-	return &PostgresLogger{
-		NewLogger(fieldValues, loggerWriters...),
-	}
-}
-
-func (logger *PostgresLogger) PanicError(err error) {
-	logger.Panic(err)
-}
-
-func (logger *PostgresLogger) PanicfOnError(format string, err error) {
-	if err != nil {
-		logger.Panicf(format, err)
-	}
-}
-
-func (logger *PostgresLogger) PanicOnError(err error) {
-	if err != nil {
-		logger.PanicError(err)
-	}
-}
-
-func (logger *PostgresLogger) FatalError(err error) {
-	logger.Fatal(err)
-}
-
-func (logger *PostgresLogger) FatalfOnError(format string, err error) {
-	if err != nil {
-		logger.Fatalf(format, err)
-	}
-}
-
-func (logger *PostgresLogger) FatalOnError(err error) {
-	if err != nil {
-		logger.FatalError(err)
-	}
-}
-
-func (logger *PostgresLogger) PrintError(err error) {
-	logger.Println(err)
-}
-
-func (logger *PostgresLogger) PrintOnError(err error) {
-	if err != nil {
-		logger.PrintError(err)
-	}
-}
+var InfoPostgresLogger = NewLogger(GetFieldValues(InfoLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
+var WarningPostgresLogger = NewLogger(GetFieldValues(WarningLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
+var ErrorPostgresLogger = NewLogger(GetFieldValues(ErrorLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
+var DebugPostgresLogger = NewLogger(GetFieldValues(DebugLoggerType), NewTextWriter(ioutil.Discard, BasicFormat, BasicFields))

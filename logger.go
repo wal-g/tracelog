@@ -18,23 +18,21 @@ type Fields map[string]interface{}
 type FieldValues func() Fields
 
 type Logger struct {
-	loggerWriters []LoggerWriter
-	fieldValues   FieldValues
+	loggerWriter LoggerWriter
+	fieldValues  FieldValues
 }
 
-func NewLogger(fieldValues FieldValues, loggerWriters ...LoggerWriter) *Logger {
+func NewLogger(fieldValues FieldValues, loggerWriter LoggerWriter) *Logger {
 	return &Logger{
-		loggerWriters: loggerWriters,
-		fieldValues:   fieldValues,
+		loggerWriter: loggerWriter,
+		fieldValues:  fieldValues,
 	}
 }
 
 func (logger *Logger) Log(v ...interface{}) {
 	fields := logger.fieldValues()
 	fields["message"] = fmt.Sprint(v...)
-	for _, loggerWriter := range logger.loggerWriters {
-		loggerWriter.Log(fields)
-	}
+	logger.loggerWriter.Log(fields)
 }
 
 func (logger *Logger) Logf(format string, v ...interface{}) {
@@ -84,4 +82,46 @@ func (logger *Logger) Printf(format string, v ...interface{}) {
 
 func (logger *Logger) Print(v ...interface{}) {
 	logger.Log(v...)
+}
+
+func (logger *Logger) PanicError(err error) {
+	logger.Panic(err)
+}
+
+func (logger *Logger) PanicfOnError(format string, err error) {
+	if err != nil {
+		logger.Panicf(format, err)
+	}
+}
+
+func (logger *Logger) PanicOnError(err error) {
+	if err != nil {
+		logger.PanicError(err)
+	}
+}
+
+func (logger *Logger) FatalError(err error) {
+	logger.Fatal(err)
+}
+
+func (logger *Logger) FatalfOnError(format string, err error) {
+	if err != nil {
+		logger.Fatalf(format, err)
+	}
+}
+
+func (logger *Logger) FatalOnError(err error) {
+	if err != nil {
+		logger.FatalError(err)
+	}
+}
+
+func (logger *Logger) PrintError(err error) {
+	logger.Println(err)
+}
+
+func (logger *Logger) PrintOnError(err error) {
+	if err != nil {
+		logger.PrintError(err)
+	}
 }
