@@ -6,14 +6,10 @@ import (
 	"time"
 )
 
-type PostgresLogger struct {
-	*Logger
-}
+var PgFormat = "%s [%d] %s: %s"
+var PgFields = []string{"timestamp", "pid", "error_severity", "message"}
 
-var BasicFormat = "%s [%d] %s: %s"
-var BasicFields = []string{"timestamp", "pid", "error_severity", "message"}
-
-func GetFieldValues(loggerType LoggerType) func() Fields {
+func GetFieldValuesForPg(loggerType LoggerType) func() Fields {
 	return func() Fields {
 		now := time.Now().UTC()
 		fields := Fields{
@@ -26,7 +22,59 @@ func GetFieldValues(loggerType LoggerType) func() Fields {
 	}
 }
 
-var InfoPostgresLogger = NewLogger(GetFieldValues(InfoLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
-var WarningPostgresLogger = NewLogger(GetFieldValues(WarningLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
-var ErrorPostgresLogger = NewLogger(GetFieldValues(ErrorLoggerType), NewTextWriter(os.Stderr, BasicFormat, BasicFields))
-var DebugPostgresLogger = NewLogger(GetFieldValues(DebugLoggerType), NewTextWriter(ioutil.Discard, BasicFormat, BasicFields))
+func setupJsonPgLoggers() {
+	if logLevel == NormalLogLevel {
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewJsonWriter(ioutil.Discard))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewJsonWriter(os.Stderr))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewJsonWriter(os.Stderr))
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewJsonWriter(os.Stderr))
+	} else if logLevel == ErrorLogLevel {
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewJsonWriter(os.Stderr))
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewJsonWriter(ioutil.Discard))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewJsonWriter(ioutil.Discard))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewJsonWriter(ioutil.Discard))
+	} else {
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewJsonWriter(os.Stdout))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewJsonWriter(os.Stderr))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewJsonWriter(os.Stderr))
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewJsonWriter(os.Stderr))
+	}
+}
+
+func setupTextPgLoggers() {
+	if logLevel == NormalLogLevel {
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewTextWriter(ioutil.Discard, PgFormat, PgFields))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewTextWriter(os.Stderr, PgFormat, PgFields))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewTextWriter(os.Stderr, PgFormat, PgFields))
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewTextWriter(os.Stderr, PgFormat, PgFields))
+	} else if logLevel == ErrorLogLevel {
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewTextWriter(os.Stderr, PgFormat, PgFields))
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewTextWriter(ioutil.Discard, PgFormat, PgFields))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewTextWriter(ioutil.Discard, PgFormat, PgFields))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewTextWriter(ioutil.Discard, PgFormat, PgFields))
+	} else {
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewTextWriter(os.Stdout, PgFormat, PgFields))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewTextWriter(os.Stderr, PgFormat, PgFields))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewTextWriter(os.Stderr, PgFormat, PgFields))
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewTextWriter(os.Stderr, PgFormat, PgFields))
+	}
+}
+
+func setupCsvPgLoggers() {
+	if logLevel == NormalLogLevel {
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewCsvWriter(ioutil.Discard, PgFields))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewCsvWriter(os.Stderr, PgFields))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewCsvWriter(os.Stderr, PgFields))
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewCsvWriter(os.Stderr, PgFields))
+	} else if logLevel == ErrorLogLevel {
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewCsvWriter(os.Stderr, PgFields))
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewCsvWriter(ioutil.Discard, PgFields))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewCsvWriter(ioutil.Discard, PgFields))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewCsvWriter(ioutil.Discard, PgFields))
+	} else {
+		DebugLogger = NewLogger(GetFieldValuesForPg(DebugLoggerType), NewCsvWriter(os.Stdout, PgFields))
+		InfoLogger = NewLogger(GetFieldValuesForPg(InfoLoggerType), NewCsvWriter(os.Stderr, PgFields))
+		WarningLogger = NewLogger(GetFieldValuesForPg(WarningLoggerType), NewCsvWriter(os.Stderr, PgFields))
+		ErrorLogger = NewLogger(GetFieldValuesForPg(ErrorLoggerType), NewCsvWriter(os.Stderr, PgFields))
+	}
+}
