@@ -56,9 +56,6 @@ func setupLoggersDependingOnWriter() {
 func setupLoggers(writer GetWriter, getFieldValues GetFieldValues) {
 	if logLevel == NormalLogLevel {
 		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(ioutil.Discard))
-		InfoLogger = NewLogger(getFieldValues(InfoLoggerType), writer(os.Stderr))
-		WarningLogger = NewLogger(getFieldValues(WarningLoggerType), writer(os.Stderr))
-		ErrorLogger = NewLogger(getFieldValues(ErrorLoggerType), writer(os.Stderr))
 	} else if logLevel == ErrorLogLevel {
 		ErrorLogger = NewLogger(getFieldValues(ErrorLoggerType), writer(os.Stderr))
 		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(ioutil.Discard))
@@ -66,6 +63,9 @@ func setupLoggers(writer GetWriter, getFieldValues GetFieldValues) {
 		WarningLogger = NewLogger(getFieldValues(WarningLoggerType), writer(ioutil.Discard))
 	} else {
 		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(os.Stdout))
+	}
+
+	if logLevel == NormalLogLevel || logLevel == DevelLogLevel {
 		InfoLogger = NewLogger(getFieldValues(InfoLoggerType), writer(os.Stderr))
 		WarningLogger = NewLogger(getFieldValues(WarningLoggerType), writer(os.Stderr))
 		ErrorLogger = NewLogger(getFieldValues(ErrorLoggerType), writer(os.Stderr))
@@ -77,7 +77,7 @@ type LogLevelError struct {
 }
 
 func NewLogLevelError(incorrectLogLevel string) LogLevelError {
-	return LogLevelError{errors.Errorf("got incorrect log level: '%s', expected one of: '%v'", incorrectLogLevel, LogLevels)}
+	return LogLevelError{errors.Errorf("got incorrect log level: '%s', expected one of: '%v'", incorrectLogLevel, strings.Join(LogLevels[:], ", "))}
 }
 
 type LogWriterError struct {
@@ -85,7 +85,7 @@ type LogWriterError struct {
 }
 
 func NewLogWriterError(incorrectLogWriter string) LogWriterError {
-	return LogWriterError{errors.Errorf("got incorrect log writer: '%s', expected one of: '%v'", incorrectLogWriter, strings.Join(LogWriters[:], ","))}
+	return LogWriterError{errors.Errorf("got incorrect log writer: '%s', expected one of: '%v'", incorrectLogWriter, strings.Join(LogWriters[:], ", "))}
 }
 
 func (err LogLevelError) Error() string {
