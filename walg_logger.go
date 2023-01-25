@@ -1,7 +1,7 @@
 package tracelog
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"time"
 )
@@ -23,21 +23,6 @@ func GetFieldValuesForWalg(loggerType LoggerType) func() Fields {
 	}
 }
 
-func setupWalgLoggers() {
-	if logLevel == NormalLogLevel {
-		DebugLogger = NewLogger(GetFieldValuesForWalg(DebugLoggerType), NewTextWriter(ioutil.Discard, WalgTextFormat, WalgTextFormatFields))
-		InfoLogger = NewLogger(GetFieldValuesForWalg(InfoLoggerType), NewTextWriter(os.Stderr, WalgTextFormat, WalgTextFormatFields))
-		WarningLogger = NewLogger(GetFieldValuesForWalg(WarningLoggerType), NewTextWriter(os.Stderr, WalgTextFormat, WalgTextFormatFields))
-		ErrorLogger = NewLogger(GetFieldValuesForWalg(ErrorLoggerType), NewTextWriter(os.Stderr, WalgTextFormat, WalgTextFormatFields))
-	} else if logLevel == ErrorLogLevel {
-		ErrorLogger = NewLogger(GetFieldValuesForWalg(ErrorLoggerType), NewTextWriter(os.Stderr, WalgTextFormat, WalgTextFormatFields))
-		DebugLogger = NewLogger(GetFieldValuesForWalg(DebugLoggerType), NewTextWriter(ioutil.Discard, WalgTextFormat, WalgTextFormatFields))
-		InfoLogger = NewLogger(GetFieldValuesForWalg(InfoLoggerType), NewTextWriter(ioutil.Discard, WalgTextFormat, WalgTextFormatFields))
-		WarningLogger = NewLogger(GetFieldValuesForWalg(WarningLoggerType), NewTextWriter(ioutil.Discard, WalgTextFormat, WalgTextFormatFields))
-	} else {
-		DebugLogger = NewLogger(GetFieldValuesForWalg(DebugLoggerType), NewTextWriter(os.Stdout, WalgTextFormat, WalgTextFormatFields))
-		InfoLogger = NewLogger(GetFieldValuesForWalg(InfoLoggerType), NewTextWriter(os.Stderr, WalgTextFormat, WalgTextFormatFields))
-		WarningLogger = NewLogger(GetFieldValuesForWalg(WarningLoggerType), NewTextWriter(os.Stderr, WalgTextFormat, WalgTextFormatFields))
-		ErrorLogger = NewLogger(GetFieldValuesForWalg(ErrorLoggerType), NewTextWriter(os.Stderr, WalgTextFormat, WalgTextFormatFields))
-	}
+func GetWalgWriter(out io.Writer) LoggerWriter {
+	return NewTextWriter(out, WalgTextFormat, WalgTextFormatFields)
 }

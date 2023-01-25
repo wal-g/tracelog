@@ -3,7 +3,9 @@ package tracelog
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"io"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -36,15 +38,37 @@ var logLevelFormatters = map[string]string{
 var LogWriters = []string{CsvPg, JsonPg, TextPg, TextWalg}
 var logWriter = TextWalg
 
-func setupLoggers() {
+type GetWriter func(out io.Writer) LoggerWriter
+type GetFieldValues func(loggerType LoggerType) func() Fields
+
+func setupLoggersDependingOnWriter() {
 	if logWriter == TextWalg {
-		setupWalgLoggers()
+		setupLoggers(GetWalgWriter, GetFieldValuesForWalg)
 	} else if logWriter == JsonPg {
-		setupJsonPgLoggers()
+		setupLoggers(NewJsonWriter, GetFieldValuesForPg)
 	} else if logWriter == CsvPg {
-		setupCsvPgLoggers()
+		setupLoggers(GetPgCsvWriter, GetFieldValuesForPg)
 	} else if logWriter == TextPg {
-		setupTextPgLoggers()
+		setupLoggers(GetPgTextWriter, GetFieldValuesForPg)
+	}
+}
+
+func setupLoggers(writer GetWriter, getFieldValues GetFieldValues) {
+	if logLevel == NormalLogLevel {
+		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(ioutil.Discard))
+		InfoLogger = NewLogger(getFieldValues(InfoLoggerType), writer(os.Stderr))
+		WarningLogger = NewLogger(getFieldValues(WarningLoggerType), writer(os.Stderr))
+		ErrorLogger = NewLogger(getFieldValues(ErrorLoggerType), writer(os.Stderr))
+	} else if logLevel == ErrorLogLevel {
+		ErrorLogger = NewLogger(getFieldValues(ErrorLoggerType), writer(os.Stderr))
+		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(ioutil.Discard))
+		InfoLogger = NewLogger(getFieldValues(InfoLoggerType), writer(ioutil.Discard))
+		WarningLogger = NewLogger(getFieldValues(WarningLoggerType), writer(ioutil.Discard))
+	} else {
+		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(os.Stdout))
+		InfoLogger = NewLogger(getFieldValues(InfoLoggerType), writer(os.Stderr))
+		WarningLogger = NewLogger(getFieldValues(WarningLoggerType), writer(os.Stderr))
+		ErrorLogger = NewLogger(getFieldValues(ErrorLoggerType), writer(os.Stderr))
 	}
 }
 
@@ -84,7 +108,7 @@ func UpdateLogLevel(newLevel string) error {
 	}
 
 	logLevel = newLevel
-	setupLoggers()
+	setupLoggersDependingOnWriter()
 	return nil
 }
 
@@ -100,6 +124,6 @@ func UpdateLogWriter(newWriter string) error {
 	}
 
 	logWriter = newWriter
-	setupLoggers()
+	setupLoggersDependingOnWriter()
 	return nil
 }
