@@ -2,24 +2,30 @@ package tracelog
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
-	"os"
-
 	"github.com/pkg/errors"
+	"io"
+	"io/ioutil"
+	"os"
+	"strings"
 )
 
 const (
 	NormalLogLevel = "NORMAL"
 	DevelLogLevel  = "DEVEL"
 	ErrorLogLevel  = "ERROR"
-	timeFlags      = log.LstdFlags | log.Lmicroseconds
 )
 
-var InfoLogger = NewErrorLogger(os.Stdout, "INFO: ")
-var WarningLogger = NewErrorLogger(os.Stdout, "WARNING: ")
-var ErrorLogger = NewErrorLogger(os.Stderr, "ERROR: ")
-var DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
+const (
+	CsvPg    = "CSV PG"
+	JsonPg   = "JSON PG"
+	TextPg   = "TEXT PG"
+	TextWalg = "TEXT WALG"
+)
+
+var InfoLogger = NewLogger(GetFieldValuesForWalg(InfoLoggerType), WalgDefaultWriter)
+var WarningLogger = NewLogger(GetFieldValuesForWalg(WarningLoggerType), WalgDefaultWriter)
+var ErrorLogger = NewLogger(GetFieldValuesForWalg(ErrorLoggerType), WalgDefaultWriter)
+var DebugLogger = NewLogger(GetFieldValuesForWalg(DebugLoggerType), NewTextWriter(ioutil.Discard, WalgTextFormatForDebug, WalgTextFormatFields))
 
 var LogLevels = []string{NormalLogLevel, DevelLogLevel, ErrorLogLevel}
 var logLevel = NormalLogLevel
@@ -29,15 +35,40 @@ var logLevelFormatters = map[string]string{
 	DevelLogLevel:  "%+v",
 }
 
-func setupLoggers() {
+var LogWriters = []string{CsvPg, JsonPg, TextPg, TextWalg}
+var logWriter = TextWalg
+
+type GetWriter func(out io.Writer) LoggerWriter
+type GetFieldValues func(loggerType LoggerType) func() Fields
+
+func setupLoggersDependingOnWriter() {
+	if logWriter == TextWalg {
+		setupLoggers(GetWalgWriter, GetFieldValuesForWalg)
+	} else if logWriter == JsonPg {
+		setupLoggers(NewJsonWriter, GetFieldValuesForPg)
+	} else if logWriter == CsvPg {
+		setupLoggers(GetPgCsvWriter, GetFieldValuesForPg)
+	} else if logWriter == TextPg {
+		setupLoggers(GetPgTextWriter, GetFieldValuesForPg)
+	}
+}
+
+func setupLoggers(writer GetWriter, getFieldValues GetFieldValues) {
 	if logLevel == NormalLogLevel {
-		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
+		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(ioutil.Discard))
 	} else if logLevel == ErrorLogLevel {
-		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
-		InfoLogger = NewErrorLogger(ioutil.Discard, "INFO: ")
-		WarningLogger = NewErrorLogger(ioutil.Discard, "WARNING: ")
+		ErrorLogger = NewLogger(getFieldValues(ErrorLoggerType), writer(os.Stderr))
+		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(ioutil.Discard))
+		InfoLogger = NewLogger(getFieldValues(InfoLoggerType), writer(ioutil.Discard))
+		WarningLogger = NewLogger(getFieldValues(WarningLoggerType), writer(ioutil.Discard))
 	} else {
-		DebugLogger = NewErrorLogger(os.Stdout, "DEBUG: ")
+		DebugLogger = NewLogger(getFieldValues(DebugLoggerType), writer(os.Stdout))
+	}
+
+	if logLevel == NormalLogLevel || logLevel == DevelLogLevel {
+		InfoLogger = NewLogger(getFieldValues(InfoLoggerType), writer(os.Stderr))
+		WarningLogger = NewLogger(getFieldValues(WarningLoggerType), writer(os.Stderr))
+		ErrorLogger = NewLogger(getFieldValues(ErrorLoggerType), writer(os.Stderr))
 	}
 }
 
@@ -45,8 +76,16 @@ type LogLevelError struct {
 	error
 }
 
-func NewLogLevelError() LogLevelError {
-	return LogLevelError{errors.Errorf("got incorrect log level: '%s', expected one of: '%v'", logLevel, LogLevels)}
+func NewLogLevelError(incorrectLogLevel string) LogLevelError {
+	return LogLevelError{errors.Errorf("got incorrect log level: '%s', expected one of: '%v'", incorrectLogLevel, strings.Join(LogLevels[:], ", "))}
+}
+
+type LogWriterError struct {
+	error
+}
+
+func NewLogWriterError(incorrectLogWriter string) LogWriterError {
+	return LogWriterError{errors.Errorf("got incorrect log writer: '%s', expected one of: '%v'", incorrectLogWriter, strings.Join(LogWriters[:], ", "))}
 }
 
 func (err LogLevelError) Error() string {
@@ -65,10 +104,26 @@ func UpdateLogLevel(newLevel string) error {
 		}
 	}
 	if !isCorrect {
-		return NewLogLevelError()
+		return NewLogLevelError(newLevel)
 	}
 
 	logLevel = newLevel
-	setupLoggers()
+	setupLoggersDependingOnWriter()
+	return nil
+}
+
+func UpdateLogWriter(newWriter string) error {
+	isCorrect := false
+	for _, logWriter := range LogWriters {
+		if newWriter == logWriter {
+			isCorrect = true
+		}
+	}
+	if !isCorrect {
+		return NewLogWriterError(newWriter)
+	}
+
+	logWriter = newWriter
+	setupLoggersDependingOnWriter()
 	return nil
 }
