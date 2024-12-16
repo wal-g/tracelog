@@ -2,7 +2,7 @@ package tracelog
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 
@@ -19,7 +19,7 @@ const (
 var InfoLogger = NewErrorLogger(os.Stderr, "INFO: ")
 var WarningLogger = NewErrorLogger(os.Stderr, "WARNING: ")
 var ErrorLogger = NewErrorLogger(os.Stderr, "ERROR: ")
-var DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
+var DebugLogger = NewErrorLogger(io.Discard, "DEBUG: ")
 
 var LogLevels = []string{NormalLogLevel, DevelLogLevel, ErrorLogLevel}
 var logLevel = NormalLogLevel
@@ -31,11 +31,11 @@ var logLevelFormatters = map[string]string{
 
 func setupLoggers() {
 	if logLevel == NormalLogLevel {
-		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
+		DebugLogger = NewErrorLogger(io.Discard, "DEBUG: ")
 	} else if logLevel == ErrorLogLevel {
-		DebugLogger = NewErrorLogger(ioutil.Discard, "DEBUG: ")
-		InfoLogger = NewErrorLogger(ioutil.Discard, "INFO: ")
-		WarningLogger = NewErrorLogger(ioutil.Discard, "WARNING: ")
+		DebugLogger = NewErrorLogger(io.Discard, "DEBUG: ")
+		InfoLogger = NewErrorLogger(io.Discard, "INFO: ")
+		WarningLogger = NewErrorLogger(io.Discard, "WARNING: ")
 	} else {
 		DebugLogger = NewErrorLogger(os.Stderr, "DEBUG: ")
 	}
