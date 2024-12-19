@@ -29,16 +29,31 @@ var logLevelFormatters = map[string]string{
 	DevelLogLevel:  "%+v",
 }
 
-func setupLoggers() {
-	if logLevel == NormalLogLevel {
+func Setup(file *os.File, newLevel string) error {
+	switch newLevel {
+	case DevelLogLevel:
+		logLevel = newLevel
+		InfoLogger = NewErrorLogger(file, "INFO: ")
+		WarningLogger = NewErrorLogger(file, "WARNING: ")
+		ErrorLogger = NewErrorLogger(file, "ERROR: ")
+		DebugLogger = NewErrorLogger(file, "DEBUG: ")
+		return nil
+	case NormalLogLevel:
+		logLevel = newLevel
+		InfoLogger = NewErrorLogger(file, "INFO: ")
+		WarningLogger = NewErrorLogger(file, "WARNING: ")
+		ErrorLogger = NewErrorLogger(file, "ERROR: ")
 		DebugLogger = NewErrorLogger(io.Discard, "DEBUG: ")
-	} else if logLevel == ErrorLogLevel {
+		return nil
+	case ErrorLogLevel:
+		logLevel = newLevel
+		ErrorLogger = NewErrorLogger(file, "ERROR: ")
 		DebugLogger = NewErrorLogger(io.Discard, "DEBUG: ")
 		InfoLogger = NewErrorLogger(io.Discard, "INFO: ")
 		WarningLogger = NewErrorLogger(io.Discard, "WARNING: ")
-	} else {
-		DebugLogger = NewErrorLogger(os.Stderr, "DEBUG: ")
+		return nil
 	}
+	return NewLogLevelError()
 }
 
 type LogLevelError struct {
@@ -55,22 +70,6 @@ func (err LogLevelError) Error() string {
 
 func GetErrorFormatter() string {
 	return logLevelFormatters[logLevel]
-}
-
-func UpdateLogLevel(newLevel string) error {
-	isCorrect := false
-	for _, level := range LogLevels {
-		if newLevel == level {
-			isCorrect = true
-		}
-	}
-	if !isCorrect {
-		return NewLogLevelError()
-	}
-
-	logLevel = newLevel
-	setupLoggers()
-	return nil
 }
 
 func SetInfoOutput(destination *os.File) {
